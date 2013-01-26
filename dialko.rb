@@ -5,6 +5,8 @@ require 'yaml'
 require 'rubygems'
 require 'twitter'
 
+require_relative 'getjson'
+
 class Array
   def choice
     self[rand(self.size)]
@@ -24,6 +26,37 @@ Twitter.configure do |config|
   config.oauth_token_secret = account['oauth_token_secret']
 end
 
+# 過去Tweets
+#
+now = DateTime.now
+yearago = now << 12
+puts yearago
+
+last_watched_datetime_for_retro = DateTime.parse(dialko['last_watched_datetime_for_retro'] ||  yearago.to_s)
+
+json = getJson(yearago)
+json.reverse!
+
+target = nil
+json.each do |tweet|
+  next if ['@', '#'].any? {|e| tweet['text'].include?(e)}
+  created_at = DateTime.parse(tweet['created_at'])
+  if (created_at > last_watched_datetime_for_retro and created_at <= yearago)
+    target = tweet
+    last_watched_datetime_for_retro = created_at
+    break
+  end
+end
+
+if target
+  puts target
+  Twitter.update(target['text'])
+end
+
+dialko['last_watched_datetime_for_retro'] = last_watched_datetime_for_retro.to_s
+
+# Tweetへの反応
+#
 Twitter.home_timeline.each do |tweet|
   break if tweet.id <= dialko['last_watched_id']
   next if tweet.user.screen_name == 'dialko'
@@ -41,6 +74,8 @@ Twitter.home_timeline.each do |tweet|
 end
 
 dialko['last_watched_id'] = Twitter.home_timeline.first.id
-YAML.dump(dialko, File.open(dir + '/dialko.yaml', 'w'))
 
+# 終了処理
+#
+YAML.dump(dialko, File.open(dir + '/dialko.yaml', 'w'))
 puts 'finish'
