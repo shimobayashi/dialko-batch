@@ -17,7 +17,14 @@ puts 'start'
 
 dir = File.dirname(File.expand_path(__FILE__))
 account = YAML.load_file(dir + '/account.yaml')
-dialko = YAML.load_file(dir + '/dialko.yaml')
+dialko = (proc {
+  begin
+    YAML.load_file(dir + '/dialko.yaml')
+  rescue => e
+    p e
+    {}
+  end
+}).call
 
 Twitter.configure do |config|
   config.consumer_key = account['consumer_key']
@@ -58,7 +65,7 @@ dialko['last_watched_datetime_for_retro'] = last_watched_datetime_for_retro.to_s
 # Tweetへの反応
 #
 Twitter.home_timeline.each do |tweet|
-  break if tweet.id <= dialko['last_watched_id']
+  break if !dialko['last_watched_id'] or tweet.id <= dialko['last_watched_id']
   next if tweet.user.screen_name == 'dialko'
   puts "processing: #{tweet.id}, #{tweet.text}, #{tweet.user.screen_name}"
   case tweet.text
