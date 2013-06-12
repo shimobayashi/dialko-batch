@@ -57,7 +57,11 @@ end
 
 if target
   puts target
-  Twitter.update(target['text'])
+  begin
+    Twitter.update(target['text'])
+  rescue => e
+    p e
+  end
 end
 
 dialko['last_watched_datetime_for_retro'] = last_watched_datetime_for_retro.to_s
