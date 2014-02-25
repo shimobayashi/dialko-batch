@@ -3,7 +3,7 @@ require 'json/pure'
 def getJson(yearago)
 
   filename = yearago.strftime('%Y_%m.js');
-  filename = File.dirname(__FILE__) + '/tweets/' + filename
+  filename = File.dirname(__FILE__) + '/tweets/data/js/tweets/' + filename
 
   lines = []
   File::open(filename) do |f|
